@@ -6,7 +6,8 @@
     "build": "rimraf dist && npx tsc",
     "prestart": "npm run build",
     "start": "node dist/server.js",
-    "dev": "rimraf dist && npx tsc -w & nodemon dist/server.js"
+    "dev": "rimraf dist && npx tsc -w & nodemon dist/server.js",
+    "db:test": "node --loader ts-node/esm src/db/testConnections.ts"
   },
   "type": "module",
   "author": "",
@@ -17,7 +18,12 @@
     "@types/node": "^24.9.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "pg": "^8.16.3",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.6",
+    "ts-node": "^10.9.2"
   }
 }
