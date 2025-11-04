@@ -37,8 +37,25 @@ export const checkUserExists = async (email: string): Promise<number> => {
         console.error('Error fetching users:', error);
         throw error;
     }
-
 }
+
+export const checkUserIdExists = async (userId: number): Promise<number> => {
+    try {
+        const sql = `
+            SELECT COUNT (*)
+                FROM users 
+                WHERE id = $1
+        `
+        const result = await query<{ count: string}>(sql, [userId]);
+        const count = parseInt(result.rows[0].count, 10);
+        return count;
+    } catch (error) {   
+        console.error('Error fetching user count from id:', error);
+        throw error;
+    }
+}
+
+
 
 export const userForValidation = async (email: string): Promise<UserWithPassword> => {
     try {

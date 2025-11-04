@@ -39,8 +39,6 @@ const userLogin: RequestHandler = async (req: Request, res: Response)  => {
         
 }
 
-
-
 const userSignup: RequestHandler<{}, {}, CreateUserInput> = async (req: Request, res: Response)  => {
     try {
         const { first_name, last_name, email, password} = req.body;

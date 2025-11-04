@@ -16,3 +16,4 @@ export interface UserWithPassword {
     password_hash: string;
     role: UserRole;
 }
+
