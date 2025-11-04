@@ -2,3 +2,4 @@
 package-lock.json
 refernces/
 node_modules/
+dist/
