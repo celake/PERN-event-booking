@@ -74,4 +74,4 @@ export const userForValidation = async (email: string): Promise<UserWithPassword
     }
 
 }
-}
+
