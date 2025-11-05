@@ -5,6 +5,10 @@ const getUserDashboard: RequestHandler = (req: Request, res: Response) => {
 };
 
 const updateUserProfile: RequestHandler = (req: Request, res: Response) => {
+    // send data to database
+    // get id from body passed in from checkAuth
+    // get data from form
+    // call updateUser Profile with data
     res.send("This page is for updating the user's profile")
 };
 
@@ -26,4 +30,10 @@ const removeEventFromFavorites: RequestHandler = (req: Request, res: Response) =
 
 
 
-export { getUserDashboard, updateUserProfile, deleteUserProfile, getUserFavorites, addEventToFavorites, removeEventFromFavorites }
+export { getUserDashboard, 
+         updateUserProfile, 
+         deleteUserProfile, 
+         getUserFavorites, 
+         addEventToFavorites, 
+         removeEventFromFavorites 
+        }
