@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 
 import eventRoutes from './routes/events.routes.js';
 import authRoutes from './routes/auth.routes.js';
@@ -11,7 +12,10 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 dotenv.config();
 
+
 app.use(express.json());
+app.use(cookieParser());
+
 app.use("/api/events", eventRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/notifications", notificationRoutes);
