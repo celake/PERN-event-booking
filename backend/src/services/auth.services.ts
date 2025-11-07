@@ -62,10 +62,11 @@ export const userForValidation = async (email: string): Promise<UserWithPassword
         const sql = `
             SELECT id, first_name, last_name, email, password_hash, role
                 FROM users 
-                WHERE email = $1
+                WHERE email = $1;
         `
         const result = await query<UserWithPassword>(sql, [email]);
         const user = result.rows[0];
+        console.log({result})
 
         return user;
     } catch (error) {   

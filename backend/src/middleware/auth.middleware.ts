@@ -16,7 +16,7 @@ export const protectRoute = async (req: Request, res: Response, next: NextFuncti
         const userExists = await checkUserIdExists(decoded.userId);
 
         if (!userExists) {
-            return res.status(401).json({message: "User not found"})
+            return res.status(401).json({message: "User not found."})
         }
 
         req.userId = decoded.userId
