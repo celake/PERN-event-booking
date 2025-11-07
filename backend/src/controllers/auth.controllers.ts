@@ -12,7 +12,7 @@ const userLogin: RequestHandler = async (req: Request, res: Response)  => {
         const user: UserWithPassword = await userForValidation(email);
 
         if (!user) {
-            return res.status(400).json({message: "Invalid login credentials."})
+            return res.status(400).json({message: "Invalid login credentials. User does not exist"})
         }
 
         const isPasswordCorrect: boolean = await bcrypt.compare(password, user.password_hash)
@@ -91,5 +91,6 @@ const userLogout: RequestHandler = async (req: Request, res: Response)  => {
         res.status(500).json({message: "Enternal Server Error"})
     }
 }
+
 
 export {userLogin, userSignup, userLogout}

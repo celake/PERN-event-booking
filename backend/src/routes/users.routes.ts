@@ -1,8 +1,9 @@
 import express from 'express';
+import { protectRoute } from '../middleware/auth.middleware.js';
 
 import { 
     getUserDashboard, 
-    updateUserProfile,
+    updateUser,
     deleteUserProfile, 
     getUserFavorites,
     addEventToFavorites, 
@@ -10,17 +11,17 @@ import {
 
    const router = express.Router();
    
-   router.get('/', getUserDashboard);
+   router.get('/', protectRoute, getUserDashboard);
 
-   router.patch('/', updateUserProfile);
+   router.patch('/', protectRoute, updateUser);
 
-   router.delete('/', deleteUserProfile);
+   router.delete('/', protectRoute, deleteUserProfile);
    
-   router.get('/favorites', getUserFavorites)
+   router.get('/favorites', protectRoute, getUserFavorites)
 
-   router.post('/favorites/:eventId', addEventToFavorites);
+   router.post('/favorites/:eventId', protectRoute, addEventToFavorites);
 
-   router.delete('/favorites/:eventId', removeEventFromFavorites);
+   router.delete('/favorites/:eventId', protectRoute, removeEventFromFavorites);
 
 
    export default router;
