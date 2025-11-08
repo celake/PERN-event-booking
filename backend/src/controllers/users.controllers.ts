@@ -1,4 +1,4 @@
-export { getUserDashboard, updateUserProfile, deleteUserProfile, getUserFavorites, addEventToFavorites, removeEventFromFavorites }import { Request, Response, RequestHandler } from 'express';
+import { Request, Response, RequestHandler } from 'express';
 import { getUser, updateUserProfile, deleteUser, getFavorites, addFavorite, removeFavorite } from '../services/users.services.js';
 
 
