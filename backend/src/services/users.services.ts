@@ -1,4 +1,4 @@
-import { PublicUser } from '../types/user.types.js';
+import { PublicUser, UserRole } from '../types/user.types.js';
 import { PublicEvent } from '../types/events.types.js';
 import { query } from '../db/postgres.js';
 
@@ -19,7 +19,6 @@ export const getAllUsers = async (): Promise<PublicUser[]> => {
 
 export const updateUserProfile = async (data: Record<string, string>, userId: number): Promise<PublicUser> => {
     try {
-        // console.log("made it to the services function")
         const keys = Object.keys(data);
         const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
         const values = Object.values(data);
@@ -49,6 +48,24 @@ export const getUser = async (userId: number): Promise<PublicUser> => {
         const result = await query<PublicUser>(sql, [userId]);
 
         return result.rows[0]; 
+    } catch (error) {   
+        console.error('Error fetching users:', error);
+        throw error;
+    }
+
+}
+
+export const getUserRole =  async (userId: number): Promise<UserRole> => {
+
+    try {
+        const sql = `
+            SELECT role 
+            FROM users
+            WHERE id= $1;
+        `
+        const result = await query(sql, [userId]);
+
+        return result.rows[0].role; 
     } catch (error) {   
         console.error('Error fetching users:', error);
         throw error;
@@ -96,7 +113,7 @@ export const getFavorites = async (userId: number): Promise<PublicEvent[]> => {
     }
 }
 
-export const addFavorite = async(userId: number, eventId: number): Promise<boolean> => {
+export const addFavorite = async (userId: number, eventId: number): Promise<boolean> => {
     try {
         const sql = `
             INSERT INTO user_favorite_event (user_id, event_id) 
@@ -135,3 +152,4 @@ export const removeFavorite = async(userId: number, eventId: number): Promise<bo
         throw error;
     }
 }
+

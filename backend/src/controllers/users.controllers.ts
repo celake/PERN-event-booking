@@ -43,7 +43,6 @@ const updateUser: RequestHandler = async (req: Request, res: Response) => {
 
 const deleteUserProfile: RequestHandler = async (req: Request, res: Response) => {
     const userId: number = req.userId!;
-    console.log({userId})
     try {
         const success = await deleteUser(userId);
 
@@ -69,7 +68,6 @@ const getUserFavorites: RequestHandler = async (req: Request, res: Response) => 
     const userId: number = req.userId!;
     try {
         const result = await getFavorites(userId);
-        console.log(result)
         res.status(200).json(result)
     } catch (error) {
         console.log("Controller error getting favorites: ", error);
@@ -80,13 +78,11 @@ const getUserFavorites: RequestHandler = async (req: Request, res: Response) => 
 const addEventToFavorites: RequestHandler = async(req: Request, res: Response) => {
     const userId: number = req.userId!;
     const { eventId } = req.body;
-    console.log({eventId})
     try {
         const success = await addFavorite(userId, eventId);
         if (success) {
             res.status(204).send();
         }
-
     } catch (error) {
         console.log("Controller error adding favorite: ", error);
         res.status(500).json({message: "Internal Server Error"});

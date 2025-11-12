@@ -7,24 +7,24 @@ import {
     updateEvent,
     cancelRsvpForEvent,
     getEventAttendees,
-    sendEventNotification
+    
 } from "../controllers/events.controllers.js";
+
+import { protectRoute, requireOrganizer } from '../middleware/auth.middleware.js'
 
 const router = express.Router();
 
 router.get('/', getAllEvents);
 
-router.post('/', addNewEvent);
+router.post('/', protectRoute, addNewEvent);
 
-router.patch('/:eventId', updateEvent);
+router.patch('/:eventId', protectRoute, updateEvent);
 
-router.post('/:eventId/rsvp', RsvpForEvent);
+router.post('/:eventId/rsvp', protectRoute, RsvpForEvent);
 
-router.post('/:eventId/notify', sendEventNotification)
+router.delete('/:eventId/rsvp', protectRoute, cancelRsvpForEvent);
 
-router.delete('/:eventId/rsvp', cancelRsvpForEvent);
-
-router.get("/:eventId/attendees", getEventAttendees)
+router.get("/:eventId/attendees", protectRoute, requireOrganizer, getEventAttendees)
 
 router.get('/:eventId', getEventDetails);
 
