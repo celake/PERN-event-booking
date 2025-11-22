@@ -1,5 +1,4 @@
 import { PublicEvent, EventDetail, NewEventInput} from '../types/events.types.js';
-import { EventNotification } from '../types/notification.types.js';
 import { PublicUser } from '../types/user.types.js';
 import { query } from '../db/postgres.js';
 
@@ -65,7 +64,7 @@ export const addEvent = async (data: NewEventInput): Promise<number> => {
         throw error;
     }
 }
-export const updateEventDB = async (data: Record<string, string>, eventId: number): Promise<EventDetail>=> {
+export const updateEventDB = async (data: Record<string, string>, eventId: number): Promise<EventDetail> => {
     try {
         const keys = Object.keys(data);
         const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
@@ -86,7 +85,7 @@ export const updateEventDB = async (data: Record<string, string>, eventId: numbe
     }
 }
 
-export const addEventRSVP = async (userId: number, eventId: number): Promise<boolean> {
+export const addEventRSVP = async (userId: number, eventId: number): Promise<boolean> => {
     try {
         const sql =`
             INSERT INTO event_users
@@ -102,7 +101,7 @@ export const addEventRSVP = async (userId: number, eventId: number): Promise<boo
     }
 }
 
-export const removeEventRSVP = async (userId: number, eventId: number): Promise<boolean> {
+export const removeEventRSVP = async (userId: number, eventId: number): Promise<boolean> => {
     try {
         const sql =`
             DELETE FROM event_users
@@ -118,7 +117,7 @@ export const removeEventRSVP = async (userId: number, eventId: number): Promise<
 }
 
 
-export const eventAttendees = async (eventId: number): Promise<PublicUser[]> {
+export const eventAttendees = async (eventId: number): Promise<PublicUser[]> => {
     try {
         const sql = `
             SELECT user_id, first_name, last_name, email 

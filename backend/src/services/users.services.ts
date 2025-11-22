@@ -56,7 +56,6 @@ export const getUser = async (userId: number): Promise<PublicUser> => {
 }
 
 export const getUserRole =  async (userId: number): Promise<UserRole> => {
-
     try {
         const sql = `
             SELECT role 
@@ -64,13 +63,11 @@ export const getUserRole =  async (userId: number): Promise<UserRole> => {
             WHERE id= $1;
         `
         const result = await query(sql, [userId]);
-
         return result.rows[0].role; 
     } catch (error) {   
         console.error('Error fetching users:', error);
         throw error;
     }
-
 }
 
 export const deleteUser = async (userId: number): Promise<boolean> => {

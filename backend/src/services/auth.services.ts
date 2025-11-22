@@ -66,8 +66,6 @@ export const userForValidation = async (email: string): Promise<UserWithPassword
         `
         const result = await query<UserWithPassword>(sql, [email]);
         const user = result.rows[0];
-        console.log({result})
-
         return user;
     } catch (error) {   
         console.error('Error fetching user with:', error);

@@ -30,11 +30,11 @@ export const protectRoute = async (req: Request, res: Response, next: NextFuncti
     }
 }
 
-export const requireOrganizer = async (req: Request, res: Response, next: NextFunction): Promise< void > {
+export const requireOrganizer = async (req: Request, res: Response, next: NextFunction): Promise< void > => {
 
     try {
         const userId = req.userId!;
-
+        
         const userRole: UserRole = await getUserRole(userId)
         if (userRole !== 'organizer') {
             return res.status(403).json({message: "Unauthorized to preform this action"})

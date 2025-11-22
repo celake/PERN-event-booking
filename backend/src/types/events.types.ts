@@ -29,3 +29,4 @@ export interface NewEventInput {
     description?: string;
     location?: number
 }
+

@@ -51,7 +51,11 @@ export const initializePostgres = async () => {
             "message" TEXT,
             "status" sendStatus DEFAULT 'draft',
             "created_at" TIMESTAMPTZ DEFAULT now(),
+            "subject" TEXT NOT NULL,
+            "sent_at" TIMESTAMPTZ,
+            "deleted_by_organizer" boolean DEFAULT false;
             PRIMARY KEY("id")
+            CHECK (status <> 'draft' OR deleted_by_organizer = false)
         );
 
 
