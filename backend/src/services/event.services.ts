@@ -56,7 +56,6 @@ export const addEvent = async (data: NewEventInput): Promise<number> => {
             VALUES (${setValues})
             RETURNING id
         `
-        console.log(sql)
         const result = await query(sql);
         return result.rows[0];
      } catch (error) {

@@ -40,6 +40,7 @@ export const initializePostgres = async () => {
             "postcode" VARCHAR(255) NOT NULL,
             "additional_locator" VARCHAR(255),
             "country" VARCHAR(255),
+            "archived" boolean DEFAULT false,
             PRIMARY KEY("id")
         );
 

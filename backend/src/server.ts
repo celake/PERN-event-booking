@@ -6,6 +6,7 @@ import eventRoutes from './routes/events.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import notificationRoutes from './routes/notifications.routes.js';
 import usersRoutes from './routes/users.routes.js';
+import locationRoutes from './routes/locations.routes.js';
 
 const PORT = process.env.PORT || 3000;
 
@@ -20,6 +21,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", usersRoutes)
+app.use("/api/locations", locationRoutes)
 
 
 app.get("/", (req: Request, res: Response) => {
