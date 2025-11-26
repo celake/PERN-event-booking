@@ -1,21 +1,22 @@
 import { PublicUser, UserRole } from '../types/user.types.js';
 import { PublicEvent } from '../types/events.types.js';
 import { query } from '../db/postgres.js';
+import { DatabaseError } from '../lib/errors.js'
 
-export const getAllUsers = async (): Promise<PublicUser[]> => {
-    try {
-        const sql = `
-            SELECT id, first_name, last_name, email FROM users
-        `
+// export const getAllUsers = async (): Promise<PublicUser[]> => {
+//     try {
+//         const sql = `
+//             SELECT id, first_name, last_name, email FROM users
+//         `
 
-        const result = await query<PublicUser>(sql);
+//         const result = await query<PublicUser>(sql);
 
-        return result.rows; 
-    } catch (error) {   
-        console.error('Error fetching users:', error);
-        throw error;
-    }
-}
+//         return result.rows; 
+//     } catch (error) {   
+//         console.error('Error fetching users:', error);
+//         throw error;
+//     }
+// }
 
 export const updateUserProfile = async (data: Record<string, string>, userId: number): Promise<PublicUser> => {
     try {
@@ -37,7 +38,7 @@ export const updateUserProfile = async (data: Record<string, string>, userId: nu
 
 }
 
-export const getUser = async (userId: number): Promise<PublicUser> => {
+export const getUserFromDb = async (userId: number): Promise<PublicUser> => {
 
     try {
         const sql = `
@@ -71,7 +72,6 @@ export const getUserRole =  async (userId: number): Promise<UserRole> => {
 }
 
 export const deleteUser = async (userId: number): Promise<boolean> => {
-    console.log("deleteUser sevices function called")
     try {
         const sql = `
            DELETE FROM users
@@ -91,7 +91,7 @@ export const deleteUser = async (userId: number): Promise<boolean> => {
 
 }
 
-export const getFavorites = async (userId: number): Promise<PublicEvent[]> => {
+export const getFavoritesFromDb = async (userId: number): Promise<PublicEvent[]> => {
     try {
         const sql =`
             SELECT e.id, e.event, e.description, e.start_date, e.end_date, e.status
@@ -110,7 +110,7 @@ export const getFavorites = async (userId: number): Promise<PublicEvent[]> => {
     }
 }
 
-export const addFavorite = async (userId: number, eventId: number): Promise<boolean> => {
+export const addFavoriteInDb = async (userId: number, eventId: number): Promise<void> => {
     try {
         const sql = `
             INSERT INTO user_favorite_event (user_id, event_id) 
@@ -118,19 +118,17 @@ export const addFavorite = async (userId: number, eventId: number): Promise<bool
         `
         const result = await query(sql, [userId, eventId])
         if (!result || typeof result.rowCount !== "number") {
-            console.log("Unexpected delete favorite result: ", result)
-            return false
+            throw new DatabaseError("Unexpected error adding favorite from db")
         }
 
-        return result.rowCount > 0; 
-
+        return; 
     } catch (error) {
         console.error('DB error setting favorites:', error);
         throw error;
     }
 }
 
-export const removeFavorite = async(userId: number, eventId: number): Promise<boolean> => {
+export const removeFavoriteInDb = async(userId: number, eventId: number): Promise<void> => {
     try {
         const sql = `
            DELETE FROM user_favorite_event
@@ -138,11 +136,10 @@ export const removeFavorite = async(userId: number, eventId: number): Promise<bo
         `
         const result = await query(sql, [userId, eventId]);
         if (!result || typeof result.rowCount !== "number") {
-            console.log("Unexpected delete result: ", result)
-            return false
+            throw new DatabaseError("Unexpected error removing favorite from db")
         }
 
-        return result.rowCount > 0; 
+        return;
 
     } catch (error) {
         console.error('DB error removing favorites:', error);

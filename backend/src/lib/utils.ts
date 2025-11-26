@@ -21,3 +21,16 @@ export const generateToken = (userId: number, res:Response): string => {
 
     return token;
 };
+
+export const isValidObject = (obj: Record<string, any>): boolean => {
+    console.log(!obj);
+    console.log(typeof obj === 'object');
+    console.log(Object.keys(obj).length === 0)
+    const isObject: boolean =  !(!obj || (typeof obj !== 'object' && Object.keys(obj).length === 0);)
+    const hasValidValues: boolean = Object.values(obj).some(value => {
+        if (value === null || value === undefined) return false;
+        if (typeof value === 'string') value = value.trim();
+        return value !== "";
+    });
+    return isObject && hasValidValues;
+}

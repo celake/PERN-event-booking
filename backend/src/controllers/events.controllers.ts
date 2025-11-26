@@ -1,51 +1,54 @@
 import { Request, Response, RequestHandler } from 'express';
-import { getOpenEvents, 
-         eventDetails, 
-         addEvent, 
-         updateEventDB, 
-         addEventRSVP,
-         removeEventRSVP,
-         eventAttendees } from '../services/event.services.js';
+import jwt from 'jsonwebtoken';
+import { getOpenEventsFromDb, 
+         getEventDetailsFromDb, 
+         addEventInDb, 
+         updateEventInDb, 
+         addEventRsvpInDb,
+         removeEventRsvpInDb,
+         eventAttendeesFromDB,
+         eventAttendeesCountFromDB,
+        getEventOrganizers } from '../services/event.services.js';
+import { NotFoundError, DatabaseError } from '../lib/errors.js';
 
 
 const getAllEvents: RequestHandler = async (req: Request, res: Response) => {
     try {
-        const events =await getOpenEvents();
-        if (!events) {
-            res.status(400).json({message: "Error loading events" })
-        };
+        const events =await getOpenEventsFromDb();
         res.status(200).json(events);
     } catch (error) {
-        console.log("Error in get all events controller", error);
+        console.error("Error in getAllEvents controller:", error)
         res.status(500).json({message: "Internal Server Error"});
     };
 }
 
 const getEventDetails: RequestHandler = async (req: Request, res: Response) => {
- 
-    const { eventId } = req.params
     try {
-        const event = await eventDetails(parseInt(eventId));
-        if (!event) {
-            res.status(404).json({message: "Event not found" })
-        };
+        const { eventId } = req.params;
+        const event = await getEventDetailsFromDb(parseInt(eventId));
+        const eventOrganizer = await getEventOrganizers(parseInt(eventId));
+        const userId = req.userId;
+        if (userId && eventOrganizer.includes(userId)) {
+            const attendees = await eventAttendeesCountFromDB(parseInt(eventId));
+            return res.status(200).json({ event, attendees })
+        }
         res.status(200).json(event);
     } catch (error) {
-        console.log("Error in get event details controller", error);
+        if (error instanceof NotFoundError) return res.status(404).json({ message: error.message });
+        console.error("Error in get event details controller", error);
         res.status(500).json({message: "Internal Server Error"});
     }
 }
 
-const addNewEvent: RequestHandler = async (req: Request, res: Response) => {
+const createNewEvent: RequestHandler = async (req: Request, res: Response) => {
     const data = req.body;
+    const userId: number = req.userId!
     try {
-        const newEvent = await addEvent(data);
-        if (!newEvent) {
-            res.status(400).json({message: "Error creating new event" })
-        }
+        const newEvent = await addEventInDb(data, userId);
         res.status(201).json(newEvent)
     } catch (error) {
-        console.log("Error in add new event  controller", error);
+        if (error instanceof DatabaseError) return res.status(404).json({ message: error.message });
+        console.error("Error in add new event controller", error);
         res.status(500).json({message: "Internal Server Error"});
     }
 }
@@ -53,30 +56,27 @@ const addNewEvent: RequestHandler = async (req: Request, res: Response) => {
 const updateEvent: RequestHandler = async (req: Request, res: Response) => { 
     try {
         const data = req.body;
-        const { eventId} = req.params;
-        const updatedEvent = await updateEventDB(data, parseInt(eventId));
-        if (!updatedEvent) {
-            res.status(400).json({message: "Controller error updating event"})
-        }
+        const { eventId } = req.params;
+        const updatedEvent = await updateEventInDb(data, parseInt(eventId));
+
         res.status(200).json(updatedEvent);
     } catch (error) {
-        console.log("Error in add new event  controller", error);
+        if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
+        console.error("Error in update event controller", error);
         res.status(500).json({message: "Internal Server Error"});
     }
 }
 
-const RsvpForEvent: RequestHandler = async (req: Request, res: Response) => {
+const rsvpForEvent: RequestHandler = async (req: Request, res: Response) => {
     try {
         const { eventId } = req.params;
         const userId: number = req.userId!
-
-        const success = await addEventRSVP(userId, parseInt(eventId));
-        if (!success) {
-            res.status(400).json({message: "Controller function error adding rsvp"});
-        }
+        await addEventRsvpInDb(userId, parseInt(eventId));
+   
         res.status(204).send();
     } catch (error) {
-        console.log("Server error in add rsvp controller", error);
+        if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
+        console.error("Server error in add rsvp controller", error);
         res.status(500).json({message: "Internal Server Error"});
     }
 }
@@ -85,14 +85,12 @@ const cancelRsvpForEvent: RequestHandler = async (req: Request, res: Response) =
     try {
         const { eventId } = req.params;
         const userId: number = req.userId!
+        const success = await removeEventRsvpInDb(userId, parseInt(eventId));
 
-        const success = await removeEventRSVP(userId, parseInt(eventId));
-        if (!success) {
-            res.status(400).json({message: "Controller function error removing rsvp"});
-        }
         res.status(204).send();
     } catch (error) {
-        console.log("Server error in remove rsvp controller", error);
+        if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
+        console.error("Server error in remove rsvp controller", error);
         res.status(500).json({message: "Internal Server Error"});
     }
 }
@@ -100,21 +98,18 @@ const cancelRsvpForEvent: RequestHandler = async (req: Request, res: Response) =
 const getEventAttendees: RequestHandler = async (req: Request, res: Response) => {
     try {
         const { eventId } = req.params;
-        const attendees = await eventAttendees(parseInt(eventId));  
-        if (attendees.length < 1) {
-            res.status(400).json({message: "No event attedees found"});
-        } 
+        const attendees = await eventAttendeesFromDB(parseInt(eventId));  
         res.status(200).json(attendees);
     } catch (error) {
-        console.log("Server error in fetch all attendees controller", error);
+        console.error("Server error in fetch all attendees controller", error);
         res.status(500).json({message: "Internal Server Error"});
     }
 }
 
 export { getAllEvents, 
         getEventDetails, 
-        RsvpForEvent, 
-        addNewEvent, 
+        rsvpForEvent, 
+        createNewEvent, 
         updateEvent, 
         cancelRsvpForEvent, 
         getEventAttendees, 

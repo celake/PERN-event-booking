@@ -76,7 +76,7 @@ export const initializePostgres = async () => {
         );
 
         CREATE TABLE IF NOT EXISTS event_organizers (
-            event_id INTEGER NOT NULL,
+            event_id INTEGER UNIQUE NOT NULL,
             user_id INTEGER NOT NULL,
             PRIMARY KEY (event_id, user_id),
             FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,

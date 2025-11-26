@@ -11,7 +11,6 @@ import { saveNotificationToDB,
         toggleReadStatus } from '../services/notification.services.js';
 import { ConflictError,
          DatabaseError,
-         ValidationError,
          NotFoundError
  } from "../lib/errors.js";
 
@@ -22,9 +21,9 @@ const getUserNotifications: RequestHandler = async (req: Request, res: Response)
 
         res.status(200).json(notifications)
     } catch (error) {
-        console.error("Error fetching user notifications: ", error);
+        console.error("Error in getUserNotifications controller: ", error);
         res.status(500).json({message: "Internal server error"})
-    }
+    } 
 }
 
 const getOrganizerNotifications: RequestHandler = async (req: Request, res: Response) => {
@@ -40,7 +39,7 @@ const getOrganizerNotifications: RequestHandler = async (req: Request, res: Resp
             sent
         })
     } catch (error) {
-        console.error("Error fetching organizer notifications: ", error);
+        console.error("Error in getOrganizerNotifications Controller: ", error);
         res.status(500).json({message: "Internal server error"});
     }
 }
@@ -51,10 +50,11 @@ const getNotificationDetails: RequestHandler = async (req: Request, res: Respons
         const userId: number = req.userId!;
         const notification = await getNotificationDetailsFromDb(notificationId, userId);
 
-       
         res.status(200).json(notification)
     } catch (error) {
+        if (error instanceof NotFoundError) return res.status(404).json({ message: error.message });
         if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
+        console.error("Error in getNotificationDetails controller: ", error);
         res.status(500).json({message: "Internal server error"});
     }
 }
@@ -69,6 +69,7 @@ const saveNotification: RequestHandler = async (req: Request, res: Response) => 
         
     } catch (error) {
         if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
+        console.error("Error in saveNotification controller: ", error);
         res.status(500).json({message: "Internal server error"})
     }
 }
@@ -81,6 +82,7 @@ const sendNotification: RequestHandler = async (req: Request, res: Response) => 
     } catch (error: any) {
         if (error instanceof ConflictError) return res.status(409).json({ message: error.message });
         if (error instanceof DatabaseError) return res.status(400).json({ message: error.message });
+        console.error("Error in sendNotification controller: ", error);
         res.status(500).json({message: "Internal server error"})
     }
 }
@@ -94,6 +96,7 @@ const updateNotification: RequestHandler = async (req: Request, res: Response) =
         res.status(200).json({event_id, subject, message})
     } catch (error) {
         if (error instanceof DatabaseError) return res.status(400).json({ message: error.message });
+        console.error("Error in updateNotification controller: ", error);
         res.status(500).json({message: "Internal server error"})
     }
 }
@@ -108,6 +111,7 @@ const markNotificationReadState: RequestHandler = async (req: Request, res: Resp
         res.status(204).send();
     } catch (error) {
         if (error instanceof DatabaseError) return res.status(400).json({ message: error.message });
+        console.error("Error in markNotificationReadState controller: ", error);
         res.status(500).json({message: "Internal server error"})
     }
 }
@@ -120,6 +124,7 @@ const deleteUserNotification: RequestHandler = async (req: Request, res: Respons
         res.status(204).send();
     } catch (error) {
        if (error instanceof DatabaseError) return res.status(400).json({ message: error.message });
+       console.error("Error in markNotificationReadState controller: ", error);
        res.status(500).json({message: "Internal server error"}) 
     }
 }
@@ -132,6 +137,7 @@ const deleteDraftNotification: RequestHandler = async (req: Request, res: Respon
         res.status(204).send();
     } catch (error) {
        if (error instanceof DatabaseError) return res.status(400).json({ message: error.message });
+       console.error("Error in deleteDraftNotification controller: ", error);
        res.status(500).json({message: "Internal server error"}) 
     }
 }

@@ -53,11 +53,10 @@ export const getNotificationDetailsFromDb = async (notificationId: number, userI
                 INNER JOIN events e ON e.id = n.event_id
                 WHERE n.id = $1;
         `
-
         const result = await query(sql, [notificationId])
-        console.log(result.rows[0])
+
         if ((result.rowCount || 0) < 1) {
-            throw new NotFoundError('Notification not found');
+            throw new NotFoundError('Error, notification not found.');
         }
 
         const isRead = await setReadStatus(notificationId, userId);
@@ -270,7 +269,6 @@ export const setSentStatus = async (notificationId: number): Promise<boolean> =>
 
 
 export const setReadStatus = async (notificationId: number, userId: number): Promise<boolean> => {
-
     try {
         const sql =`
             UPDATE notification_users
@@ -279,9 +277,9 @@ export const setReadStatus = async (notificationId: number, userId: number): Pro
         `
 
         const result = await query(sql, [userId, notificationId]);
-        console.log(result)
+
         if ((result.rowCount || 0) < 1) {
-            throw new DatabaseError('Failed to set read status');
+            throw new NotFoundError('Notification not found in user notifications');
         }
         return result.rowCount === 1;
     } catch (error) {

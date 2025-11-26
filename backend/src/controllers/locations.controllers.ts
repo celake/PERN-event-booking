@@ -5,16 +5,15 @@ import { getActiveLocationsFromDB,
          searchLocationsInDb
  } from '../services/location.services.js';
 import { LocationSearchQuery, NewLocation } from '../types/location.types.js';
-import { DatabaseError, ValidationError } from "../lib/errors.js";
+import { DatabaseError, NotFoundError, ValidationError } from "../lib/errors.js";
 
 const getActiveLocations: RequestHandler = async (req: Request, res: Response) => {
     try {
         const locations = await getActiveLocationsFromDB();
-
-        res.status(200).json({ data: locations });
+        res.status(200).json({locations });
     } catch (error) {
-        if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
-        res.status(500).json({message: "Internal server error"})
+        console.error("Error fetching active locations", error);
+        res.status(500).json({message: "Internal server error"});
     }
 }
 
@@ -22,33 +21,35 @@ const createLocation: RequestHandler = async (req: Request, res: Response) => {
     try {
         const data = req.body as NewLocation;
         const newLocationId = await addLocationToDb(data);
-        res.status(201).json({data: newLocationId})
+        res.status(201).json({newLocationId});
     } catch (error) {
         if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
-        res.status(500).json({message: "Internal server error"})
+        console.error("Unexpected error in createLocation:", error)
+        res.status(500).json({message: "Internal server error"});
     }
 }
 
 const searchLocations: RequestHandler = async (req: Request, res: Response) => {
     try {
         const data = req.query as LocationSearchQuery;
-        let searchResults = await searchLocationsInDb(data);
-        res.status(200).json({data: searchResults})
+        const searchResults = await searchLocationsInDb(data);
+        res.status(200).json({searchResults});
     } catch (error) {
-        if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
-        res.status(500).json({message: "Internal server error"})
+        console.error("Error fetch searched locations", error);
+        res.status(500).json({message: "Internal server error"});
     }
 }
 
 const archiveLocationById: RequestHandler = async (req: Request, res: Response) => {
     try {
         const locationId = parseInt(req.params.id);
-        if (isNaN(locationId)) throw new ValidationError("Invalid location ID")
-        const archivedLoc = await setLocationToArchived(locationId);
+        if (isNaN(locationId)) throw new ValidationError("Invalid location ID");
+        await setLocationToArchived(locationId);
 
         res.status(204).send();
     } catch (error) {
         if (error instanceof DatabaseError) return res.status(500).json({ message: error.message });
+        console.error("Unexpected error in archiveLocationById:", error)
         res.status(500).json({message: "Internal server error"});
     }
 }

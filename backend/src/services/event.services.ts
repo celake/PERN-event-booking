@@ -1,8 +1,9 @@
 import { PublicEvent, EventDetail, NewEventInput} from '../types/events.types.js';
 import { PublicUser } from '../types/user.types.js';
-import { query } from '../db/postgres.js';
+import { query, pool } from '../db/postgres.js';
+import { DatabaseError, NotFoundError } from '../lib/errors.js';
 
-export const getOpenEvents = async (): Promise<PublicEvent[]> => {
+export const getOpenEventsFromDb = async (): Promise<PublicEvent[]> => {
     try {
         const sql =`
             SELECT e.id, e.event, e.start_date, l.city, l.country
@@ -18,7 +19,7 @@ export const getOpenEvents = async (): Promise<PublicEvent[]> => {
     }
 }
 
-export const eventDetails = async (eventId: number): Promise<EventDetail> => {
+export const getEventDetailsFromDb = async (eventId: number): Promise<EventDetail> => {
     try {
         const sql =`
             SELECT e.id, 
@@ -37,6 +38,10 @@ export const eventDetails = async (eventId: number): Promise<EventDetail> => {
             WHERE e.id = $1;
         `;
         const result = await query<EventDetail>(sql, [eventId])
+
+        if ((result.rowCount || 0) < 1) {
+            throw new NotFoundError("Event not found");
+        }
         return result.rows[0];
     } catch (error) {
         console.error('DB error fetching events:', error);
@@ -45,25 +50,40 @@ export const eventDetails = async (eventId: number): Promise<EventDetail> => {
 }
 
 
-export const addEvent = async (data: NewEventInput): Promise<number> => {
+export const addEventInDb = async (data: NewEventInput, userId: number): Promise<number> => {
+    const client = await pool.connect();
     try {
         const keys = Object.keys(data);
         const setColumns = keys.join(', ');
         const values = Object.values(data);
-        const setValues = values.map(value => `'${value}'`).join(', ');
-        const sql =`
+        const placeholders = values.map((_, index) => `$${index + 1}`).join(', ');
+        const eventSql =`
             INSERT INTO events (${setColumns})
-            VALUES (${setValues})
-            RETURNING id
+            VALUES (${placeholders})
+            RETURNING id;
         `
-        const result = await query(sql);
-        return result.rows[0];
+        const orgSql = `
+            INSERT INTO event_organizers (event_id, user_id)
+                VALUES ($1, $2);
+        `
+
+        await client.query("BEGIN")
+        
+        const newEvent = await client.query<{ id: number }>(eventSql, [...values]);
+        await client.query(orgSql, [newEvent.rows[0].id, userId]);
+
+        await client.query("COMMIT");
+
+        return newEvent.rows[0].id;
      } catch (error) {
-        console.error('DB error creating new event:', error);
+        await client.query("ROLLBACK");
+        console.error("Failed to create new event", error)
         throw error;
+    } finally {
+        client.release();
     }
 }
-export const updateEventDB = async (data: Record<string, string>, eventId: number): Promise<EventDetail> => {
+export const updateEventInDb = async (data: Record<string, string>, eventId: number): Promise<EventDetail> => {
     try {
         const keys = Object.keys(data);
         const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
@@ -76,7 +96,10 @@ export const updateEventDB = async (data: Record<string, string>, eventId: numbe
         `
         const result = await query<PublicEvent>(sql, [...values, eventId])
 
-        const updatedEvent = await eventDetails(result.rows[0].id)
+        if ((result.rowCount || 0) < 1) {
+            throw new DatabaseError("Failed to update event data");
+        }
+        const updatedEvent = await getEventDetailsFromDb(result.rows[0].id)
         return updatedEvent
     } catch (error) {
         console.error('DB error Updating event:', error);
@@ -84,15 +107,19 @@ export const updateEventDB = async (data: Record<string, string>, eventId: numbe
     }
 }
 
-export const addEventRSVP = async (userId: number, eventId: number): Promise<boolean> => {
+export const addEventRsvpInDb = async (userId: number, eventId: number): Promise<boolean> => {
     try {
         const sql =`
             INSERT INTO event_users
             (user_id, event_id)
             VALUES ($1, $2)
+            RETURNING event_id;
         `
         const result = await query(sql, [userId, eventId])
 
+        if ((result.rowCount || 0) < 1) {
+            throw new DatabaseError("Failed to add rsvp for event");
+        }
         return (result.rowCount ?? 0) > 0
     } catch (error) {
         console.error('DB error adding rsvp:', error);
@@ -100,13 +127,16 @@ export const addEventRSVP = async (userId: number, eventId: number): Promise<boo
     }
 }
 
-export const removeEventRSVP = async (userId: number, eventId: number): Promise<boolean> => {
+export const removeEventRsvpInDb = async (userId: number, eventId: number): Promise<boolean> => {
     try {
         const sql =`
             DELETE FROM event_users
             WHERE user_id = $1 AND event_id = $2;
         `
         const result = await query(sql, [userId, eventId])
+        if ((result.rowCount || 0) < 1) {
+            throw new DatabaseError("Failed to remove rsvp for event");
+        }
 
         return (result.rowCount ?? 0) > 0
     } catch (error) {
@@ -116,7 +146,7 @@ export const removeEventRSVP = async (userId: number, eventId: number): Promise<
 }
 
 
-export const eventAttendees = async (eventId: number): Promise<PublicUser[]> => {
+export const eventAttendeesFromDB = async (eventId: number): Promise<PublicUser[]> => {
     try {
         const sql = `
             SELECT user_id, first_name, last_name, email 
@@ -128,6 +158,39 @@ export const eventAttendees = async (eventId: number): Promise<PublicUser[]> => 
         return result.rows;
     } catch (error) {
         console.error('DB error fetching event attendees:', error);
+        throw error;
+    }
+}
+
+export const eventAttendeesCountFromDB = async (eventId: number): Promise<number> => {
+    try {
+        const sql = `
+            SELECT COUNT(user_id) as attendees  
+                FROM event_users
+                GROUP BY event_id
+                HAVING event_id = $1;
+        `
+        const count = await query(sql,[eventId]);
+        return count.rows[0].attendees;
+    } catch (error) {
+         console.error('DB error fetching event attendee count:', error);
+        throw error;
+    }
+}
+
+export const getEventOrganizers = async (eventId: number): Promise<number[]> => {
+    try {
+        const sql = `
+            SELECT user_id 
+                FROM event_organizers
+                WHERE event_id = $1;
+        `
+
+        const result = await query(sql, [eventId]);
+        const organizers = result.rows.map(row => row.user_id)
+        return organizers;
+    } catch (error) {
+         console.error('DB error fetching event Organizers:', error);
         throw error;
     }
 }

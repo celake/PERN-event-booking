@@ -30,6 +30,33 @@ export const protectRoute = async (req: Request, res: Response, next: NextFuncti
     }
 }
 
+export const decodeUser = async (req: Request, res: Response, next: NextFunction): Promise< void > => {
+    try {
+        const token = req.cookies.jwt;
+
+        if(!token) {
+            req.userId = undefined;
+            return next()
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
+
+        const userExists = await checkUserIdExists(decoded.userId);
+
+        if (!userExists) {
+            return res.status(401).json({message: "User not found."})
+        }
+
+        req.userId = decoded.userId
+        next();
+
+    } catch (error) {
+        console.error("Error in decodeUser Middleware", error);
+        req.userId = undefined;
+        next();
+}
+}
+
 export const requireOrganizer = async (req: Request, res: Response, next: NextFunction): Promise< void > => {
 
     try {

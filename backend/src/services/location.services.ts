@@ -1,8 +1,6 @@
 import { query } from "../db/postgres.js";
 import { Locations, NewLocation, LocationSearchQuery } from '../types/location.types.js';
-import { ConflictError,
-         DatabaseError,
-         ValidationError,
+import { DatabaseError,
          NotFoundError
  } from "../lib/errors.js";
 
@@ -14,13 +12,9 @@ import { ConflictError,
                 WHERE archived = false;
         `
         const result = await query(sql);
-        if (!result) {
-            throw new DatabaseError("No locations found")
-        }
-
         return result.rows;
     } catch (error) {
-        console.error('Db error fetching locations:', error);
+        console.error('Error fetching locations:', error);
         throw error;
     }
  };
@@ -64,13 +58,10 @@ export const searchLocationsInDb = async (serchTerms: LocationSearchQuery): Prom
                 WHERE archived = false AND ${conditions};
         `
         const result = await query(sql, values);
-        console.log(result.rows)
-        if (!result.rows || result.rows.length === 0) {
-            throw new DatabaseError("No results found.");
-        }
         return result.rows;
+        
     } catch (error) {
-        console.error('Failed to search locations:', error);
+        console.error('Error fetching serch locations:', error);
         throw error;
     }
 }

@@ -10,6 +10,7 @@ export interface PublicEvent {
 
 export interface EventDetail {
     id: number;
+    organizer_id: number;
     event: string;
     start_date: Date;
     end_date: Date;
